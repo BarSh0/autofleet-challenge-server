@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import * as Vehicles from '../../../vehicles-location.json';
+import * as Vehicles from '../../vehicles-location.json';
 import getVehiclesInPolygon from '../services/getVehiclesInPolygon';
 import logger from '../utils/logger';
 
