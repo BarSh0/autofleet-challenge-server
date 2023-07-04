@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import * as Vehicles from '../../vehicles-location.json';
 import getVehiclesInPolygon from '../services/getVehiclesInPolygon';
 import logger from '../utils/logger';
+import { Point } from '../constants/intefaces';
 
 const router = Router();
 
@@ -18,11 +19,21 @@ router.get('/', (req: Request, res: Response) => {
 
 router.post('/by-polygon', (req: Request, res: Response) => {
   try {
-    const { polygon } = req.body;
-    if (!polygon) throw new Error('Polygon is required');
-    logger.info(`Searching for vehicles in polygon with ${polygon.length} points`);
-    const vehiclesInPolygon = getVehiclesInPolygon(polygon, vehicles);
-    logger.info(`Found ${vehiclesInPolygon.length} vehicles in polygon`);
+    const { polygons } = req.body;
+    if (!polygons) throw new Error('Polygon is required');
+    logger.info(`Searching for vehicles with ${polygons.length} polygons`);
+
+    let vehiclesInPolygon: any[] = [];
+
+    polygons.forEach((polygon: Point[]) => {
+      if (!polygon) throw new Error('Polygon is required');
+      if (!polygon.length) throw new Error('Polygon must have at least one point');
+      vehiclesInPolygon = [...vehiclesInPolygon, ...getVehiclesInPolygon(polygon, vehicles)];
+      vehiclesInPolygon = vehiclesInPolygon.filter(
+        (vehicle, index, self) => index === self.findIndex((t) => t.id === vehicle.id)
+      );
+    });
+    logger.info(`Found ${vehiclesInPolygon.length} vehicles in polygons`);
     res.send(vehiclesInPolygon);
   } catch (error: any) {
     logger.error(error);
